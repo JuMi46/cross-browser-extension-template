@@ -52,9 +52,19 @@ function loadBuildConfig() {
   return config;
 }
 
+function injectEnvs(text) {
+  if (haveEnvVars) {
+    for (const [key, value] of Object.entries(buildConfig)) {
+      const placeholder = `__${key}__`;
+      text = text.replace(new RegExp(placeholder, "g"), value);
+    }
+  }
+  return text;
+}
+
 function readSourceManifest() {
-  const raw = fs.readFileSync(sourceManifestPath, "utf8");
-  return JSON.parse(raw);
+  const manifest = injectEnvs(fs.readFileSync(sourceManifestPath, "utf8"));
+  return JSON.parse(manifest);
 }
 
 function ensureDir(dirPath) {
@@ -69,13 +79,9 @@ function copySharedFiles(targetDir, buildConfig) {
   for (const sourcePath of sharedFiles) {
     const targetPath = path.join(targetDir, path.basename(sourcePath));
 
-    if (haveEnvVars && sourcePath.endsWith(".js")) {
-      let raw = fs.readFileSync(sourcePath, "utf8");
-      for (const [key, value] of Object.entries(buildConfig)) {
-        const placeholder = `__${key}__`;
-        raw = raw.replace(new RegExp(placeholder, "g"), value);
-      }
-      fs.writeFileSync(targetPath, raw, "utf8");
+    if (haveEnvVars) {
+      let fileContent = injectEnvs(fs.readFileSync(sourcePath, "utf8"));
+      fs.writeFileSync(targetPath, fileContent, "utf8");
     } else {
       fs.copyFileSync(sourcePath, targetPath);
     }
@@ -114,7 +120,6 @@ function rewriteApisForChrome(targetDir) {
     fs.writeFileSync(filePath, rewritten, "utf8");
   }
 }
-
 
 function buildChrome(sourceManifest, buildConfig) {
   const chromeManifest = JSON.parse(JSON.stringify(sourceManifest));
