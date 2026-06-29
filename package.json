@@ -1,0 +1,10 @@
+{
+  "name": "cross-browser-extension",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node scripts/build-manifests.js all",
+    "build:chrome": "node scripts/build-manifests.js chrome",
+    "build:firefox": "node scripts/build-manifests.js firefox"
+  }
+}
