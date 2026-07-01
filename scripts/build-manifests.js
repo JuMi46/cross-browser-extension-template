@@ -3,9 +3,9 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 // Fill these out
-const haveEnvVars = false; // Set to true if you want to use environment variables in your build
-const requiredEnvVars = [];
 const extensionName = "";
+const requiredEnvVars = [];
+// ------------------------
 
 const rootDir = path.resolve(__dirname, "..");
 const sourceExtensionDir = path.join(rootDir, "extension");
@@ -13,12 +13,17 @@ const sourceManifestPath = path.join(sourceExtensionDir, "manifest.json");
 const distDir = path.join(rootDir, "dist");
 const sharedFiles = getAllFiles(sourceExtensionDir, null, ["manifest.json"]);
 const envPath = path.join(rootDir, ".env");
+var haveEnvVars = false;
 
 function loadBuildConfig() {
   const config = {};
 
   if (!fs.existsSync(envPath)) {
-    throw new Error(`Missing .env file. Create one with the required variables: ${requiredEnvVars.join(", ")}`);
+    var errorMessage = "Missing .env file.";
+    if (requiredEnvVars.length > 0) {
+      errorMessage += ` Create one with the required environment variables: ${requiredEnvVars.join(", ")}.`;
+    }
+    throw new Error(errorMessage);
   }
 
   const envRaw = fs.readFileSync(envPath, "utf8");
@@ -49,6 +54,7 @@ function loadBuildConfig() {
     }
   }
 
+  haveEnvVars = Object.keys(config).length > 0;
   return config;
 }
 
