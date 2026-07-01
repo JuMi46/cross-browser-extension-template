@@ -52,7 +52,7 @@ function loadBuildConfig() {
   return config;
 }
 
-function injectEnvs(text) {
+function injectEnvs(text, buildConfig) {
   if (haveEnvVars) {
     for (const [key, value] of Object.entries(buildConfig)) {
       const placeholder = `__${key}__`;
@@ -62,8 +62,8 @@ function injectEnvs(text) {
   return text;
 }
 
-function readSourceManifest() {
-  const manifest = injectEnvs(fs.readFileSync(sourceManifestPath, "utf8"));
+function readSourceManifest(buildConfig) {
+  const manifest = injectEnvs(fs.readFileSync(sourceManifestPath, "utf8"), buildConfig);
   return JSON.parse(manifest);
 }
 
@@ -80,7 +80,7 @@ function copySharedFiles(targetDir, buildConfig) {
     const targetPath = path.join(targetDir, path.basename(sourcePath));
 
     if (haveEnvVars) {
-      let fileContent = injectEnvs(fs.readFileSync(sourcePath, "utf8"));
+      let fileContent = injectEnvs(fs.readFileSync(sourcePath, "utf8"), buildConfig);
       fs.writeFileSync(targetPath, fileContent, "utf8");
     } else {
       fs.copyFileSync(sourcePath, targetPath);
@@ -100,7 +100,8 @@ function getAllFiles(dir, endsWith, excludeFiles) {
       continue;
     }
   
-    if (entry.isFile() 
+    if (
+      entry.isFile() 
       && (!endsWith || entry.name.endsWith(endsWith))
       && (!excludeFiles || !excludeFiles.some((exclude) => entry.name.endsWith(exclude)))) 
     {
@@ -208,8 +209,8 @@ function packageFirefoxBuild() {
 
 function main() {
   const target = (process.argv[2] || "all").toLowerCase();
-  const sourceManifest = readSourceManifest();
   const buildConfig = loadBuildConfig();
+  const sourceManifest = readSourceManifest(buildConfig);
 
   cleanDist();
 
